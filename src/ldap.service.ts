@@ -110,13 +110,29 @@ export class LdapService {
       }
 
       // 5. User bind succeeded: parse Active Directory Security Groups (RBAC)
-      const memberOfList = Array.isArray(attributes.memberOf)
+      const memberOfList: string[] = Array.isArray(attributes.memberOf)
         ? attributes.memberOf
         : attributes.memberOf ? [attributes.memberOf] : [];
 
-      const isAdmin = memberOfList.some((groupDn: string) =>
-        groupDn.toLowerCase().includes(config.ldap.adminGroupDn.toLowerCase())
-      );
+      const normalizeDn = (dn: string) => dn.toLowerCase().replace(/\s*,\s*/g, ',').trim();
+      const targetAdminDn = normalizeDn(config.ldap.adminGroupDn);
+      const targetAdminCnMatch = targetAdminDn.match(/^(cn=[^,]+)/);
+      const targetAdminCn = targetAdminCnMatch ? targetAdminCnMatch[1] : '';
+
+      const isAdminByGroup = memberOfList.some((groupDn: string) => {
+        const normalized = normalizeDn(groupDn);
+        return (
+          normalized === targetAdminDn ||
+          normalized.includes(targetAdminDn) ||
+          (targetAdminCn && (normalized === targetAdminCn || normalized.startsWith(targetAdminCn + ',')))
+        );
+      });
+
+      const isAdminByUsername = config.adminUsernames.includes(username.toLowerCase());
+      const isAdmin = isAdminByGroup || isAdminByUsername;
+
+      console.log(`[LDAP] User '${username}' groups:`, memberOfList);
+      console.log(`[LDAP] User '${username}' resolved isAdmin: ${isAdmin} (byGroup: ${isAdminByGroup}, byUsername: ${isAdminByUsername})`);
 
       const authenticatedUser: AuthenticatedUser = {
         id: attributes.sAMAccountName || username,
@@ -133,12 +149,14 @@ export class LdapService {
           id: authenticatedUser.id,
           username: authenticatedUser.username,
           email: authenticatedUser.email,
-          displayName: authenticatedUser.displayName,
-          role: authenticatedUser.role,
-          issuer: 'ctf-auth-vm1',
+          displayName: attributes.displayName || attributes.cn || username,
+          role: isAdmin ? 'ADMIN' : 'USER',
         },
         config.jwt.secret,
-        { expiresIn: config.jwt.expiry as any }
+        {
+          expiresIn: config.jwt.expiry as any,
+          issuer: 'ctf-auth-vm1',
+        }
       );
 
       return {
@@ -330,7 +348,8 @@ export class LdapService {
       };
     }
 
-    const isAdmin = user.includes('admin');
+    const isAdmin =
+      user.includes('admin') || config.adminUsernames.includes(user);
     const authenticatedUser: AuthenticatedUser = {
       id: username,
       username,
@@ -347,10 +366,12 @@ export class LdapService {
         email: authenticatedUser.email,
         displayName: authenticatedUser.displayName,
         role: authenticatedUser.role,
-        issuer: 'ctf-auth-vm1',
       },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiry as any }
+      {
+        expiresIn: config.jwt.expiry as any,
+        issuer: 'ctf-auth-vm1',
+      }
     );
 
     return {

@@ -5,7 +5,7 @@ export const config = {
   port: parseInt(process.env.AUTH_PORT || '4000', 10),
   nodeEnv: process.env.NODE_ENV || 'production',
   jwt: {
-    secret: process.env.JWT_SHARED_SECRET || 'shared-ctf-jwt-secret-key-distributed-vms',
+    secret: process.env.JWT_SHARED_SECRET || 'distributed-ctf-jwt-secret-shared-across-vms-2026!',
     expiry: process.env.JWT_EXPIRY || '8h',
   },
   ldap: {
@@ -17,5 +17,10 @@ export const config = {
     userGroupDn: process.env.LDAP_USER_GROUP_DN || 'cn=CTF_Users,ou=Groups,dc=corp,dc=local',
   },
   devMockAuth: process.env.DEV_MOCK_AUTH === 'true',
+  adminUsernames: (process.env.ADMIN_USERNAMES || 'admin')
+    .toLowerCase()
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean),
 };
 
