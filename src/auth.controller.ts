@@ -24,7 +24,11 @@ export const login = async (req: Request, res: Response) => {
       return res.status(200).json(authResult);
     }
 
-    if (authResult.status === 'ACCOUNT_LOCKED' || authResult.status === 'ACCOUNT_EXPIRED') {
+    if (
+      authResult.status === 'ACCOUNT_LOCKED' ||
+      authResult.status === 'ACCOUNT_EXPIRED' ||
+      authResult.status === 'UNAUTHORIZED_GROUP'
+    ) {
       return res.status(403).json(authResult);
     }
 

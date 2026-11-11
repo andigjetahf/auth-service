@@ -132,8 +132,32 @@ export class LdapService {
       const isAdminByUsername = config.adminUsernames.includes(username.toLowerCase());
       const isAdmin = isAdminByGroup || isAdminByUsername;
 
+      // Check User / Student Group (CTFUser)
+      const targetUserDn = normalizeDn(config.ldap.userGroupDn);
+      const targetUserCnMatch = targetUserDn.match(/^(cn=[^,]+)/);
+      const targetUserCn = targetUserCnMatch ? targetUserCnMatch[1] : '';
+
+      const isUserByGroup = memberOfList.some((groupDn: string) => {
+        const normalized = normalizeDn(groupDn);
+        return (
+          normalized === targetUserDn ||
+          normalized.includes(targetUserDn) ||
+          (targetUserCn && (normalized === targetUserCn || normalized.startsWith(targetUserCn + ',')))
+        );
+      });
+
       console.log(`[LDAP] User '${username}' groups:`, memberOfList);
-      console.log(`[LDAP] User '${username}' resolved isAdmin: ${isAdmin} (byGroup: ${isAdminByGroup}, byUsername: ${isAdminByUsername})`);
+      console.log(`[LDAP] User '${username}' resolved isAdmin: ${isAdmin}, isUserByGroup: ${isUserByGroup}`);
+
+      // Enforce group membership: user must be in CTFAdmin or CTFUser
+      if (!isAdmin && !isUserByGroup) {
+        console.warn(`[LDAP] Access denied: User '${username}' is in AD but not part of CTFAdmin or CTFUser.`);
+        return {
+          status: 'UNAUTHORIZED_GROUP',
+          message: 'Ju lutem kontaktoni me administratorin Andi Gjeta',
+          errorCode: 'ERROR_NOT_IN_AUTHORIZED_GROUP',
+        };
+      }
 
       const authenticatedUser: AuthenticatedUser = {
         id: attributes.sAMAccountName || username,
@@ -351,6 +375,15 @@ export class LdapService {
 
     const isAdmin =
       user.includes('admin') || config.adminUsernames.includes(user);
+    const isUser = user.includes('user') || user.includes('student');
+
+    if (!isAdmin && !isUser) {
+      return {
+        status: 'UNAUTHORIZED_GROUP',
+        message: 'Ju lutem kontaktoni me administratorin Andi Gjeta',
+        errorCode: 'ERROR_NOT_IN_AUTHORIZED_GROUP',
+      };
+    }
     const authenticatedUser: AuthenticatedUser = {
       id: username,
       username,

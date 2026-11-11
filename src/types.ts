@@ -4,6 +4,7 @@ export type AuthStatus =
   | 'ACCOUNT_LOCKED'
   | 'ACCOUNT_EXPIRED'
   | 'INVALID_CREDENTIALS'
+  | 'UNAUTHORIZED_GROUP'
   | 'SERVICE_ERROR';
 
 export type UserRole = 'ADMIN' | 'USER';
