@@ -10,11 +10,11 @@ export const config = {
   },
   ldap: {
     url: process.env.LDAP_URL || 'ldap://192.168.20.80:389',
-    bindDn: process.env.LDAP_BIND_DN || 'cn=svc_ctf,ou=ServiceAccounts,dc=corp,dc=local',
-    bindPassword: process.env.LDAP_BIND_PASSWORD || 'LdapServicePassword123!',
-    baseDn: process.env.LDAP_BASE_DN || 'dc=corp,dc=local',
-    adminGroupDn: process.env.LDAP_ADMIN_GROUP_DN || 'cn=CTF_Admins,ou=Groups,dc=corp,dc=local',
-    userGroupDn: process.env.LDAP_USER_GROUP_DN || 'cn=CTF_Users,ou=Groups,dc=corp,dc=local',
+    bindDn: process.env.LDAP_BIND_DN || 'CN=Administrator,CN=Users,DC=harryfultz,DC=local',
+    bindPassword: process.env.LDAP_BIND_PASSWORD || 'Lolipop9!',
+    baseDn: process.env.LDAP_BASE_DN || 'DC=harryfultz,DC=local',
+    adminGroupDn: process.env.LDAP_ADMIN_GROUP_DN || 'CN=CTFAdmin,OU=Cyber,OU=Klube,OU=Viti,DC=harryfultz,DC=local',
+    userGroupDn: process.env.LDAP_USER_GROUP_DN || 'CN=CTFUser,OU=Cyber,OU=Klube,OU=Viti,DC=harryfultz,DC=local',
   },
   devMockAuth: process.env.DEV_MOCK_AUTH === 'true',
   adminUsernames: (process.env.ADMIN_USERNAMES || 'admin')

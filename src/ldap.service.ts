@@ -40,6 +40,7 @@ export class LdapService {
         attributes: [
           'dn',
           'sAMAccountName',
+          'userPrincipalName',
           'mail',
           'displayName',
           'cn',
@@ -137,7 +138,7 @@ export class LdapService {
       const authenticatedUser: AuthenticatedUser = {
         id: attributes.sAMAccountName || username,
         username: attributes.sAMAccountName || username,
-        email: attributes.mail || `${username}@corp.local`,
+        email: attributes.mail || attributes.userPrincipalName || `${username}@harryfultz.local`,
         displayName: attributes.displayName || attributes.cn || username,
         role: isAdmin ? 'ADMIN' : 'USER',
         ldapDn: userDn,
@@ -353,7 +354,7 @@ export class LdapService {
     const authenticatedUser: AuthenticatedUser = {
       id: username,
       username,
-      email: `${username}@corp.local`,
+      email: `${username}@harryfultz.local`,
       displayName: isAdmin ? 'Instructor / CTF Administrator' : `Student (${username})`,
       role: isAdmin ? 'ADMIN' : 'USER',
       ldapDn: `cn=${username},ou=Users,${config.ldap.baseDn}`,
